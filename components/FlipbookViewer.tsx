@@ -261,7 +261,7 @@ export default function FlipbookViewer() {
 
     if (!isLoaded || folders.length === 0) {
         return (
-            <div className="flex h-screen w-full items-center justify-center bg-[#faf8f4]">
+            <div className="flex h-[100dvh] w-full items-center justify-center bg-[#faf8f4]">
                 <div className="animate-pulse flex flex-col items-center">
                     <div className="h-12 w-12 rounded-full border-4 border-[#cba365] border-t-transparent animate-spin mb-4"></div>
                     <p className="text-[#a0622a] font-bold text-lg tracking-wider">ĐANG TẢI DỮ LIỆU SÁCH...</p>
@@ -272,7 +272,7 @@ export default function FlipbookViewer() {
 
     return (
         <FlipbookContext.Provider value={{ currentPage, targetPage, isDesktop }}>
-            <div ref={containerRef} className="flex flex-col h-screen w-full font-sans overflow-hidden select-none relative back print:block print:h-auto print:overflow-visible print:w-full">
+            <div ref={containerRef} className="flex flex-col h-[100dvh] w-full font-sans overflow-hidden select-none relative back print:block print:h-auto print:overflow-visible print:w-full">
                 <div className="absolute inset-0 z-0 flex flex-col md:flex-row pointer-events-none print:hidden">
                     <div className="relative w-full md:w-1/2 h-full opacity-100 sepia-[20%] transform-gpu">
                         <Image src="/nga-6-buon-ma-thuot-guong-mat-thuong-hieu-cua-thanh-pho-vung-cao-06-1652171304.jpg" alt="Buôn Ma Thuột Bg" fill sizes="(max-width: 768px) 100vw, 50vw" priority quality={75} className="object-cover" />
@@ -310,7 +310,7 @@ export default function FlipbookViewer() {
                                     ))}
                                 </div>
 
-                                <div className="relative w-full h-full z-10  ">
+                                <div className={`relative w-full h-full z-10 ${zoom > 1 ? 'pointer-events-none' : ''}`}>
                                     {flipbookComponent}
                                 </div>
 
