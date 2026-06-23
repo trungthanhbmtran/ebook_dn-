@@ -1,29 +1,36 @@
+'use client';
+
 import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { flushSync } from 'react-dom';
 import HTMLFlipBook from "react-pageflip";
 import Image from "next/image";
 import Toolbar from "./Toolbar";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, ZoomIn, ZoomOut } from "lucide-react";
 import { FlipbookContext, LazyPageContent } from "./LazyPageContent";
 
 import { Cover } from "./book/Cover";
-import { TableOfContentsVi, TableOfContentsEn, TOCItem } from "./book/TableOfContents";
-import { ContentPageLeft, ContentPageRight } from "./book/ContentPage";
 import { BackCover } from "./book/BackCover";
-import { ProjectSummary } from "./book/ProjectSummary";
+import { PdfPage } from "./book/PdfPage";
 import { useScreenSize } from '../hooks/useScreenSize';
 import MacroTab from './MacroTab';
-import dynamic from 'next/dynamic';
 
-const ProjectModal = dynamic(() => import('./ProjectModal').then(mod => mod.ProjectModal), { ssr: false });
+interface MacroFolder {
+    name: string;
+    pages: string[];
+}
 
 export default function FlipbookViewer() {
-    const [investmentData, setInvestmentData] = useState<any>(null);
+    const [folders, setFolders] = useState<MacroFolder[]>([]);
 
     useEffect(() => {
-        import("../data/investment-projects.json").then(module => {
-            setInvestmentData(module.default);
-        });
+        fetch('/api/book-pages')
+            .then(res => res.json())
+            .then(data => {
+                if (data.macros) {
+                    setFolders(data.macros);
+                }
+            })
+            .catch(console.error);
     }, []);
 
     const bookRef = useRef<any>(null);
@@ -40,36 +47,12 @@ export default function FlipbookViewer() {
     const [zoom, setZoom] = useState(1);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [baseScale, setBaseScale] = useState(1);
-
-    const [selectedProject, setSelectedProject] = useState<any | null>(null);
-    const [modalLang, setModalLang] = useState<'vi' | 'en'>('vi');
-    const [hasOpenedModal, setHasOpenedModal] = useState(false);
-    const [mobileLang, setMobileLang] = useState<'vi' | 'en'>('vi');
-
-    const handleLanguageToggle = useCallback((lang: 'vi' | 'en') => {
-        setMobileLang(lang);
-    }, []);
-
-    useEffect(() => {
-        if (selectedProject) {
-            setHasOpenedModal(true);
-            // Forcefully cancel any ongoing drag in react-pageflip
-            try {
-                document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
-            } catch (e) {
-                // Ignore dispatch errors
-            }
-        }
-    }, [selectedProject]);
-
-    const handleProjectClick = useCallback((project: any, lang: 'vi' | 'en') => {
-        setSelectedProject(project);
-        setModalLang(lang);
-    }, []);
+    const [inputPage, setInputPage] = useState("1");
+    const [isReady, setIsReady] = useState(false);
 
     const updateScale = useCallback(() => {
-        const targetWidth = isDesktop ? 1200 : 424;
-        const targetHeight = isDesktop ? 750 : 600;
+        const targetWidth = isDesktop ? 1126 : 563;
+        const targetHeight = 756;
 
         const horizontalMargin = isDesktop ? 220 : 70;
         const verticalMargin = isDesktop ? 80 : 20;
@@ -93,206 +76,83 @@ export default function FlipbookViewer() {
         };
     }, [updateScale]);
 
-    const [inputPage, setInputPage] = useState("1");
-    const [isReady, setIsReady] = useState(false);
-
-    const { macroGroupsMenu, totalPages, bookPagesToRender } = React.useMemo(() => {
-        if (!investmentData) return { macroGroupsMenu: [], totalPages: 0, bookPagesToRender: [] };
-        const renderItems: any[] = [];
-
-        if (investmentData.pages && Array.isArray(investmentData.pages)) {
-            investmentData.pages.forEach((page: any) => {
-                if (page.category) {
-                    renderItems.push({
-                        isMacroHeader: true,
-                        macroGroupName: page.category.vi,
-                        macroGroupNameEn: page.category.en,
-                        projectCount: page.projects ? page.projects.length : 0
-                    });
-                }
-                if (page.projects && Array.isArray(page.projects)) {
-                    page.projects.forEach((project: any, index: number) => {
-                        renderItems.push({
-                            isProject: true,
-                            stt: index + 1,
-                            ...project
-                        });
-                    });
-                }
-            });
-        }
-
-        const contentPages: any[][] = [];
-        let currentPageData: any[] = [];
-        let currentSlots = 0;
-        const MAX_SLOTS = 10;
-
-        const getWeight = (item: any) => {
-            if (item.isMacroHeader) return 3;
-
-            let weight = 2.5;
-
-            const nameVi = item.name?.vi || item.tenDuAn || item.name || "";
-            const scaleVi = typeof item.scale === "string" ? item.scale : (item.scale?.vi || item.quyMo || "");
-
-            const nameLen = nameVi?.length || 0;
-            const scaleLen = scaleVi?.length || 0;
-
-            if (nameLen > 70) weight += 0.5;
-            if (scaleLen > 100) weight += 0.5;
-            if (scaleLen > 200) weight += 0.5;
-            if (scaleLen > 300) weight += 1.0;
-            if (scaleLen > 400) weight += 1.0;
-
-            return weight;
-        };
-
-        for (let i = 0; i < renderItems.length; i++) {
-            const item = renderItems[i];
-            const weight = getWeight(item);
-            let lookaheadWeight = weight;
-
-            if (item.isMacroHeader) {
-                if (renderItems[i + 1]) lookaheadWeight += getWeight(renderItems[i + 1]);
-                if (renderItems[i + 2]) lookaheadWeight += getWeight(renderItems[i + 2]);
-            }
-
-            if (currentSlots + lookaheadWeight > MAX_SLOTS && currentSlots > 0) {
-                contentPages.push(currentPageData);
-                currentPageData = [];
-                currentSlots = 0;
-            }
-            currentPageData.push(item);
-            currentSlots += weight;
-        }
-        if (currentPageData.length > 0) contentPages.push(currentPageData);
-
-        const macroGroupsMenu: any[] = [];
-        const macroPageIndices = new Set<number>();
-
-        contentPages.forEach((page, pIdx) => {
-            const macroItem = page.find((item: any) => item.isMacroHeader);
-            if (macroItem) {
-                const pageIndex = isDesktop ? pIdx * 2 + 3 : pIdx + 3;
-                macroGroupsMenu.push({
-                    name: macroItem.macroGroupName.replace(/LĨNH VỰC /i, ""),
-                    projectCount: macroItem.projectCount,
-                    pageIndex: pageIndex
-                });
-                macroPageIndices.add(pageIndex);
-                if (isDesktop) macroPageIndices.add(pageIndex + 1);
-            }
-        });
-
-        const tocItems = contentPages.reduce((acc: any[], page, pIdx) => {
-            const macroItem = page.find((item: any) => item.isMacroHeader);
-            if (macroItem) {
-                acc.push({
-                    titleVi: macroItem.macroGroupName,
-                    titleEn: macroItem.macroGroupNameEn || macroItem.macroGroupName,
-                    pageVi: isDesktop ? pIdx * 2 + 3 : pIdx + 3,
-                    pageEn: isDesktop ? pIdx * 2 + 4 : pIdx + 3
-                });
-            }
-            return acc;
-        }, []);
-
-        let totalPages = isDesktop
-            ? 1 + 2 + (contentPages.length * 2) + 1
-            : 1 + 2 + contentPages.length + 1;
-        if (isDesktop && totalPages % 2 !== 0) totalPages += 1;
-
+    const { macroGroupsMenu, totalPages, bookPagesToRender } = useMemo(() => {
         const bookPagesToRender: React.ReactNode[] = [];
+        const macroGroupsMenu: any[] = [];
 
         bookPagesToRender.push(
             <div key="front-cover" className="page-wrapper h-full">
-                <Cover title={investmentData.bookTitle?.vi || "Danh mục dự án"} lang={isDesktop ? 'vi' : mobileLang} />
+                <Cover />
             </div>
         );
 
-        if (isDesktop || mobileLang === 'vi') {
-            bookPagesToRender.push(
-                <div key="toc-vi" className="page-wrapper h-full">
-                    <TableOfContentsVi items={tocItems} />
-                </div>
-            );
-        } else {
-            bookPagesToRender.push(
-                <div key="toc-en" className="page-wrapper h-full">
-                    <TableOfContentsEn items={tocItems} />
-                </div>
-            );
-        }
+        let currentIndex = 1;
 
-        bookPagesToRender.push(
-            <div key="project-summary" className="page-wrapper h-full">
-                <ProjectSummary lang={isDesktop ? 'vi' : mobileLang} />
-            </div>
-        );
-
-        contentPages.forEach((pageData, index) => {
-            const macroGroupItem = pageData.find((item: any) => item.isMacroHeader) || pageData.find((item: any) => item.macroGroupName);
-            const runningHeaderVi = macroGroupItem ? `${macroGroupItem.macroGroupName}` : "Danh mục xúc tiến đầu tư";
-            const runningHeaderEn = macroGroupItem ? `${macroGroupItem.macroGroupNameEn || macroGroupItem.macroGroupName}` : "Investment Promotion Portfolio";
-            const pageIndex = isDesktop ? index * 2 + 3 : index + 3;
-
-            if (isDesktop) {
-                const isMacroSpreadLeft = macroPageIndices.has(pageIndex);
-                const isMacroSpreadRight = macroPageIndices.has(pageIndex + 1);
-
+        folders.forEach((folder, folderIndex) => {
+            // Đảm bảo "hình ảnh tổng thể" (trang đầu tiên của thư mục) luôn nằm ở mặt TRÁI (index lẻ)
+            // và trang tiếp theo (trang nội dung) nằm ở mặt PHẢI (index chẵn)
+            if (isDesktop && currentIndex % 2 === 0) {
                 bookPagesToRender.push(
-                    <div key={`page-left-${index}`} className="page-wrapper h-full">
-                        <LazyPageContent pageIndex={pageIndex} alwaysRender={isMacroSpreadLeft}>
-                            <ContentPageLeft pageData={pageData} pageIndex={pageIndex} runningHeaderVi={runningHeaderVi} onProjectClick={handleProjectClick} />
-                        </LazyPageContent>
-                    </div>
+                    <div key={`blank-folder-pad-${currentIndex}`} className="page-light bg-white w-full h-full shadow-[inset_-10px_0_20px_rgba(0,0,0,0.05)]"></div>
                 );
-                bookPagesToRender.push(
-                    <div key={`page-right-${index}`} className="page-wrapper h-full">
-                        <LazyPageContent pageIndex={pageIndex + 1} alwaysRender={isMacroSpreadRight}>
-                            <ContentPageRight pageData={pageData} pageIndex={pageIndex + 1} runningHeaderEn={runningHeaderEn} onProjectClick={handleProjectClick} />
-                        </LazyPageContent>
-                    </div>
-                );
-            } else {
-                const isMacroPage = macroPageIndices.has(pageIndex);
-                if (mobileLang === 'vi') {
-                    bookPagesToRender.push(
-                        <div key={`page-vi-${index}`} className="page-wrapper h-full">
-                            <LazyPageContent pageIndex={pageIndex} alwaysRender={isMacroPage}>
-                                <ContentPageLeft pageData={pageData} pageIndex={pageIndex} runningHeaderVi={runningHeaderVi} onProjectClick={handleProjectClick} />
-                            </LazyPageContent>
-                        </div>
-                    );
-                } else {
-                    bookPagesToRender.push(
-                        <div key={`page-en-${index}`} className="page-wrapper h-full">
-                            <LazyPageContent pageIndex={pageIndex}>
-                                <ContentPageRight pageData={pageData} pageIndex={pageIndex} runningHeaderEn={runningHeaderEn} onProjectClick={handleProjectClick} />
-                            </LazyPageContent>
-                        </div>
-                    );
-                }
+                currentIndex++;
             }
+
+            macroGroupsMenu.push({
+                name: folder.name,
+                pageIndex: currentIndex
+            });
+
+            folder.pages.forEach((pageUrl, pageIdx) => {
+                const isPdf = pageUrl.toLowerCase().endsWith('.pdf');
+                
+                // Keep the book shadow styling for inner pages
+                const isLeftPage = isDesktop && (currentIndex % 2 !== 0);
+
+                bookPagesToRender.push(
+                    <div key={`page-${currentIndex}`} className="page-wrapper h-full bg-white relative flex items-center justify-center overflow-hidden">
+
+                        {/* Page Shadow Details */}
+                        {isDesktop && (
+                            <>
+                                {isLeftPage ? (
+                                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none z-30 mix-blend-multiply"></div>
+                                ) : (
+                                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/10 to-transparent pointer-events-none z-30 mix-blend-multiply"></div>
+                                )}
+                            </>
+                        )}
+
+                        <div className="w-full h-full relative z-10">
+                            <LazyPageContent pageIndex={currentIndex}>
+                                {isPdf ? (
+                                    <PdfPage fileUrl={pageUrl} width={563} />
+                                ) : (
+                                    <Image 
+                                        src={pageUrl} 
+                                        alt={`Page ${currentIndex}`} 
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, 50vw"
+                                        quality={100}
+                                        unoptimized={true}
+                                        priority={currentIndex <= 4}
+                                        className="object-contain" 
+                                    />
+                                )}
+                            </LazyPageContent>
+                        </div>
+                    </div>
+                );
+                currentIndex++;
+            });
         });
 
         if (isDesktop) {
-            while (bookPagesToRender.length < totalPages - 1) {
-                const isLeftPage = bookPagesToRender.length % 2 !== 0;
+            // Đảm bảo tổng số trang TRƯỚC KHI chèn bìa sau là số lẻ
+            // Để khi chèn bìa sau vào, tổng số trang là chẵn, bìa sau sẽ nằm ở mặt trái của tờ cuối cùng
+            while (bookPagesToRender.length % 2 === 0) {
                 bookPagesToRender.push(
-                    <div key={`blank-${bookPagesToRender.length}`} className="page-light bg-[#f8f9fa] w-full flex flex-col h-full relative">
-                        {isLeftPage ? (
-                            <>
-                                <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[rgba(0,0,0,0.2)] to-transparent pointer-events-none z-30 print:hidden"></div>
-                                <div className="absolute right-0 top-0 bottom-0 w-[2px] bg-[rgba(0,0,0,0.1)] pointer-events-none z-30 print:hidden"></div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[rgba(0,0,0,0.2)] to-transparent pointer-events-none z-30 print:hidden"></div>
-                                <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[rgba(0,0,0,0.1)] pointer-events-none z-30 print:hidden"></div>
-                            </>
-                        )}
-                    </div>
+                    <div key={`blank-${bookPagesToRender.length}`} className="page-light bg-white w-full h-full shadow-[inset_-10px_0_20px_rgba(0,0,0,0.05)]"></div>
                 );
             }
         }
@@ -303,8 +163,8 @@ export default function FlipbookViewer() {
             </div>
         );
 
-        return { macroGroupsMenu, totalPages, bookPagesToRender };
-    }, [handleProjectClick, isDesktop, mobileLang, handleLanguageToggle, investmentData]);
+        return { macroGroupsMenu, totalPages: bookPagesToRender.length, bookPagesToRender };
+    }, [isDesktop, folders]);
 
     useEffect(() => {
         const scrollZone = bookAreaRef.current;
@@ -356,14 +216,17 @@ export default function FlipbookViewer() {
     }, [currentPage, totalPages, isReady, isDesktop]);
 
     const goToPage = useCallback((pageIndex: number) => {
-        setTimeout(() => {
-            flushSync(() => {
-                setTargetPage(pageIndex);
-            });
-            if (bookRef.current?.pageFlip()) {
-                bookRef.current.pageFlip().flip(pageIndex);
-            }
-        }, 0);
+        if (bookRef.current?.pageFlip()) {
+            setTargetPage(pageIndex);
+            
+            // Đợi 100ms để React kịp render ảnh vào DOM thay cho thẻ "Đang tải...",
+            // giúp hiệu ứng lật trang của react-pageflip không chụp nhầm khung hình loading
+            setTimeout(() => {
+                if (bookRef.current?.pageFlip()) {
+                    bookRef.current.pageFlip().flip(pageIndex);
+                }
+            }, 100);
+        }
     }, []);
 
     const handlePageInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -376,7 +239,6 @@ export default function FlipbookViewer() {
 
     const handleFlip = useCallback((e: any) => {
         setCurrentPage(e.data);
-        setTargetPage(e.data);
         if (soundEnabled && audioRef.current) {
             audioRef.current.currentTime = 0;
             audioRef.current.play().catch(() => { });
@@ -386,8 +248,8 @@ export default function FlipbookViewer() {
     const flipbookComponent = useMemo(() => (
         // @ts-ignore
         <HTMLFlipBook
-            key={isDesktop ? "desktop" : `mobile-${mobileLang}`}
-            width={isDesktop ? 600 : 424} height={isDesktop ? 750 : 600} size="fixed" maxShadowOpacity={0.4}
+            key={isDesktop ? "desktop" : "mobile"}
+            width={563} height={756} size="fixed" maxShadowOpacity={0.4}
             showCover={true} mobileScrollSupport={true} className="w-full h-full" ref={bookRef}
             onInit={() => { setIsReady(true); }}
             onFlip={handleFlip} usePortrait={!isDesktop} drawShadow={true} flippingTime={650}
@@ -395,9 +257,9 @@ export default function FlipbookViewer() {
         >
             {bookPagesToRender}
         </HTMLFlipBook>
-    ), [isDesktop, handleFlip, bookPagesToRender, mobileLang]);
+    ), [isDesktop, handleFlip, bookPagesToRender]);
 
-    if (!investmentData) {
+    if (!isLoaded || folders.length === 0) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-[#faf8f4]">
                 <div className="animate-pulse flex flex-col items-center">
@@ -409,7 +271,7 @@ export default function FlipbookViewer() {
     }
 
     return (
-        <FlipbookContext.Provider value={{ currentPage, targetPage }}>
+        <FlipbookContext.Provider value={{ currentPage, targetPage, isDesktop }}>
             <div ref={containerRef} className="flex flex-col h-screen w-full font-sans overflow-hidden select-none relative back print:block print:h-auto print:overflow-visible print:w-full">
                 <div className="absolute inset-0 z-0 flex flex-col md:flex-row pointer-events-none print:hidden">
                     <div className="relative w-full md:w-1/2 h-full opacity-100 sepia-[20%] transform-gpu">
@@ -424,54 +286,59 @@ export default function FlipbookViewer() {
 
                 <audio ref={audioRef} src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto" />
 
-                <div ref={bookAreaRef} className="flex-1 w-full flex items-center justify-center overflow-hidden relative z-10 print:hidden">
+                <div ref={bookAreaRef} className={`flex-1 w-full flex items-center justify-center relative z-10 print:hidden ${zoom > 1 ? 'overflow-auto' : 'overflow-hidden'}`}>
                     {isDesktop && (
                         <>
-                            <button onClick={() => bookRef.current?.pageFlip()?.flipPrev()} className="absolute left-3 z-50 p-3 bg-[rgba(0,0,0,0.4)] hover:bg-[rgba(0,0,0,0.7)] text-white rounded-full backdrop-blur transition-all hidden sm:flex"><ChevronLeft size={28} /></button>
-                            <button onClick={() => bookRef.current?.pageFlip()?.flipNext()} className="absolute right-3 z-50 p-3 bg-[rgba(0,0,0,0.4)] hover:bg-[rgba(0,0,0,0.7)] text-white rounded-full backdrop-blur transition-all hidden sm:flex"><ChevronRight size={28} /></button>
+                            <button onClick={() => bookRef.current?.pageFlip()?.flipPrev()} className="fixed left-3 top-1/2 -translate-y-1/2 z-50 p-3 bg-[rgba(0,0,0,0.4)] hover:bg-[rgba(0,0,0,0.7)] text-white rounded-full backdrop-blur transition-all hidden sm:flex"><ChevronLeft size={28} /></button>
+                            <button onClick={() => bookRef.current?.pageFlip()?.flipNext()} className="fixed right-3 top-1/2 -translate-y-1/2 z-50 p-3 bg-[rgba(0,0,0,0.4)] hover:bg-[rgba(0,0,0,0.7)] text-white rounded-full backdrop-blur transition-all hidden sm:flex"><ChevronRight size={28} /></button>
                         </>
                     )}
 
-                    <div className={`flex items-center justify-center transition-all duration-500 transform-gpu ${isReady ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} style={{ transform: `scale(${zoom * baseScale})` }}>
-                        <div className="relative flex items-center justify-center " style={{ width: isDesktop ? 1200 : 424, height: isDesktop ? 750 : 600 }}>
+                    <div
+                        className={`transition-all duration-500 ${isReady ? 'opacity-100' : 'opacity-0 pointer-events-none'} ${zoom > 1 ? 'flex-none' : 'flex items-center justify-center'}`}
+                        style={zoom > 1 ? {
+                            width: (isDesktop ? 1126 : 563) * zoom * baseScale,
+                            height: 756 * zoom * baseScale
+                        } : {}}
+                    >
+                        <div className="transform-gpu flex items-center justify-center" style={{ transform: `scale(${zoom * baseScale})`, transformOrigin: zoom > 1 ? 'top left' : 'center' }}>
+                            <div className="relative flex items-center justify-center " style={{ width: isDesktop ? 1126 : 563, height: 756 }}>
 
                                 <div className="absolute right-[calc(100%-1px)] top-8 flex-col gap-1.5 z-0 flex">
                                     {macroGroupsMenu.map((menu, mIdx) => (
-                                        <MacroTab key={`left-${mIdx}`} menu={menu} mIdx={mIdx} currentPage={currentPage} side="left" onTabClick={goToPage} />
+                                        <MacroTab key={`left-${mIdx}`} menu={menu} mIdx={mIdx} currentPage={currentPage} side="left" onTabClick={goToPage} onTabHover={setTargetPage} />
                                     ))}
                                 </div>
 
-                            <div className="relative w-full h-full z-10  ">
-                                {flipbookComponent}
-                            </div>
+                                <div className="relative w-full h-full z-10  ">
+                                    {flipbookComponent}
+                                </div>
 
                                 <div className="absolute left-[calc(100%-1px)] top-8 flex-col gap-1.5 z-0 flex">
                                     {macroGroupsMenu.map((menu, mIdx) => (
-                                        <MacroTab key={`right-${mIdx}`} menu={menu} mIdx={mIdx} currentPage={currentPage} side="right" onTabClick={goToPage} />
+                                        <MacroTab key={`right-${mIdx}`} menu={menu} mIdx={mIdx} currentPage={currentPage} side="right" onTabClick={goToPage} onTabHover={setTargetPage} />
                                     ))}
                                 </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <Toolbar
-                    inputPage={inputPage} totalPages={totalPages} zoom={zoom} soundEnabled={soundEnabled}
-                    isFullscreen={isFullscreen} setInputPage={setInputPage} handlePageInput={handlePageInput}
-                    goToPage={goToPage} bookRef={bookRef} setZoom={setZoom} setSoundEnabled={setSoundEnabled}
-                    toggleFullscreen={() => { !document.fullscreenElement ? containerRef.current?.requestFullscreen() : document.exitFullscreen() }}
-                    isDesktop={isDesktop} mobileLang={mobileLang} onLanguageToggle={handleLanguageToggle}
+                    inputPage={inputPage}
+                    totalPages={totalPages}
+                    zoom={zoom}
+                    soundEnabled={soundEnabled}
+                    isFullscreen={isFullscreen}
+                    setInputPage={setInputPage}
+                    handlePageInput={handlePageInput}
+                    goToPage={goToPage}
+                    bookRef={bookRef}
+                    setZoom={setZoom}
+                    setSoundEnabled={setSoundEnabled}
+                    toggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+                    isDesktop={isDesktop}
                 />
-
-                <div className="print:hidden">
-                    {hasOpenedModal && (
-                        <ProjectModal
-                            isOpen={!!selectedProject}
-                            onClose={() => setSelectedProject(null)}
-                            project={selectedProject}
-                            lang={modalLang}
-                        />
-                    )}
-                </div>
             </div>
         </FlipbookContext.Provider>
     );

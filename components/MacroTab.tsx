@@ -6,6 +6,7 @@ interface MacroTabProps {
     currentPage: number;
     side: "left" | "right";
     onTabClick: (pageIndex: number) => void;
+    onTabHover?: (pageIndex: number) => void;
 }
 
 const MACRO_COLORS = [
@@ -17,7 +18,7 @@ const MACRO_COLORS = [
     { bg: "bg-[#1E2D24]", hoverBg: "hover:bg-[#2A4032]", border: "border-[#68D391]", text: "text-[#68D391]" }, // Green
 ];
 
-export default function MacroTab({ menu, mIdx, currentPage, side, onTabClick }: MacroTabProps) {
+export default function MacroTab({ menu, mIdx, currentPage, side, onTabClick, onTabHover }: MacroTabProps) {
     const isLeftTab = side === "left";
     const shouldRender = isLeftTab ? currentPage >= menu.pageIndex : currentPage < menu.pageIndex;
     const color = MACRO_COLORS[mIdx % MACRO_COLORS.length];
@@ -29,6 +30,7 @@ export default function MacroTab({ menu, mIdx, currentPage, side, onTabClick }: 
     return (
         <button
             onClick={() => onTabClick(menu.pageIndex)}
+            onMouseEnter={() => onTabHover && onTabHover(menu.pageIndex)}
             className={`
                 group h-[90px] sm:h-[110px] w-[35px] sm:w-[42px]
                 flex items-center justify-center p-1.5

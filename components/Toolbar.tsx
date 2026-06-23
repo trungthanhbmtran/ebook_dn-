@@ -43,10 +43,10 @@ export default function Toolbar({
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" /><path d="m22 22-5-10-5 10" /><path d="M14 18h6" /></svg>
                     </button>
                 )}
-                {isLoaded && isSm && (
+                {isLoaded && (
                     <>
-                        <button className="p-1.5 md:p-2 hover:text-[#cba365] hover:bg-[#2d3748] rounded transition-all" title="Tìm kiếm"><Search size={18} /></button>
-                        <div className="w-[1px] h-4 bg-gray-600 mx-1 md:mx-2"></div>
+                        <button className="hidden p-1.5 md:p-2 hover:text-[#cba365] hover:bg-[#2d3748] rounded transition-all" title="Tìm kiếm"><Search size={18} /></button>
+                        <div className="hidden w-[1px] h-4 bg-gray-600 mx-1 md:mx-2"></div>
                         <button onClick={() => setZoom(z => Math.min(z + 0.3, 2.5))} className="p-1.5 md:p-2 hover:text-[#cba365] hover:bg-[#2d3748] rounded transition-all" title="Phóng to"><ZoomIn size={18} /></button>
                         <button onClick={() => setZoom(z => Math.max(z - 0.3, 0.7))} className="p-1.5 md:p-2 hover:text-[#cba365] hover:bg-[#2d3748] rounded transition-all" title="Thu nhỏ"><ZoomOut size={18} /></button>
                     </>
@@ -62,7 +62,7 @@ export default function Toolbar({
                         value={inputPage}
                         onChange={(e) => setInputPage(e.target.value)}
                         onKeyDown={handlePageInput}
-                        className="w-10 md:w-12 h-6 md:h-7 bg-[#111622] text-center text-[#cba365] text-xs md:text-sm font-bold border border-white/10 rounded outline-none focus:border-[#cba365] transition-colors"
+                        className="w-16 md:w-24 h-6 md:h-7 px-1 bg-[#111622] text-center text-[#cba365] text-xs md:text-sm font-bold border border-white/10 rounded outline-none focus:border-[#cba365] transition-colors"
                     />
                     <span className="text-xs md:text-sm font-medium text-gray-400">/ {totalPages}</span>
                 </div>
