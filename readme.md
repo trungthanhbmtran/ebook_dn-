@@ -1,3 +1,21 @@
+# 📖 Dự án: Sách Đầu Tư (duandautu_image)
+
+## 📥 Tải mã nguồn (Git Clone / Pull)
+Để tải mã nguồn từ GitHub về thiết bị, sử dụng các lệnh sau:
+
+```bash
+# Nếu tải về lần đầu:
+git clone https://github.com/trungthanhbmtran/duandautu_image.git
+
+# Nếu đã tải trước đó và muốn cập nhật code mới nhất:
+git pull origin main
+```
+
+---
+
+## 🐳 Cập nhật image mới qua Docker
+
+```bash
 docker pull ghcr.io/trungthanhbmtran/ebook:latest
 docker run -d --name ebook-app -p 3000:3000 --restart unless-stopped ghcr.io/trungthanhbmtran/ebook:latest
 
