@@ -63,9 +63,9 @@ const Toolbar = memo(function Toolbar({
 
             <div className="flex items-center gap-0.5 md:gap-1">
                 {isLoaded && isLg && (
-                    <button 
-                        onClick={() => window.print()} 
-                        title="In sách" 
+                    <button
+                        onClick={() => window.print()}
+                        title="In sách"
                         className="p-1.5 md:p-2 hover:text-[#cba365] hover:bg-[#2d3748] rounded transition-all"
                     >
                         <Printer size={18} />
