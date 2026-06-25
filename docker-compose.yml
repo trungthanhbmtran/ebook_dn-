@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   web:
-    image: ${IMAGE_NAME:-ghcr.io/trungthanhbmtran/ebook_dn-}:${IMAGE_TAG:-latest}
+    image: ${IMAGE_NAME:-ghcr.io/trungthanhbmtran/ebook_dn}:${IMAGE_TAG:-latest}
     container_name: ebook_nextjs
     restart: unless-stopped
     expose:

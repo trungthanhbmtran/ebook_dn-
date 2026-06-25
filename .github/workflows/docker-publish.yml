@@ -33,9 +33,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Downcase IMAGE_NAME
+      - name: Format IMAGE_NAME
         run: |
-          echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
+          # Chuyển chữ thường
+          LOWER_NAME="${IMAGE_NAME,,}"
+          # Xóa dấu gạch ngang ở cuối (nếu có) để không bị lỗi Docker tag
+          CLEAN_NAME="${LOWER_NAME%-}"
+          echo "IMAGE_NAME=${CLEAN_NAME}" >> ${GITHUB_ENV}
 
       - name: Extract metadata (tags, labels)
         id: meta
@@ -93,9 +97,11 @@ jobs:
           script: |
             cd ~/Ebook_DN
             
-            # 1. Chuyển IMAGE_NAME thành chữ thường (chuẩn docker)
+            # 1. Xử lý tên ảnh: Chuyển chữ thường và xóa dấu gạch ngang ở cuối
             export RAW_IMAGE_NAME="${{ github.repository }}"
-            export IMAGE_NAME="ghcr.io/${RAW_IMAGE_NAME,,}"
+            export LOWER_NAME="${RAW_IMAGE_NAME,,}"
+            export CLEAN_NAME="${LOWER_NAME%-}"
+            export IMAGE_NAME="ghcr.io/${CLEAN_NAME}"
             export IMAGE_TAG="sha-${GITHUB_SHA::7}"
             
             echo "Deploying image: $IMAGE_NAME:$IMAGE_TAG"
