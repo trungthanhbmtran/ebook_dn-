@@ -22,8 +22,8 @@ const ConferenceBackground = memo(function ConferenceBackground() {
   const [binaryNodes, setBinaryNodes] = useState<{ x: number, y: number, duration: number, delay: number, val: string }[]>([]);
 
   useEffect(() => {
-    // 1. Giảm số lượng Node để giảm O(N^2) tính toán SVG line (40 -> 25)
-    const newNodes = [...Array(25)].map(() => ({
+    // 1. Giảm mạnh số lượng Node để chống lag (12 -> 6)
+    const newNodes = [...Array(6)].map(() => ({
       x: Math.random() * 100,
       y: Math.random() * 100,
       r: Math.random() * 3 + 1.5
@@ -43,8 +43,8 @@ const ConferenceBackground = memo(function ConferenceBackground() {
     });
     setIconNodes(newIconNodes);
 
-    // 3. Giảm dải Binary data (25 -> 12)
-    const newBinary = [...Array(12)].map(() => ({
+    // 3. Giảm dải Binary data (12 -> 6)
+    const newBinary = [...Array(6)].map(() => ({
       x: Math.random() * 100,
       y: Math.random() * 100,
       duration: Math.random() * 25 + 15, // Chạy chậm lại
@@ -138,7 +138,7 @@ const ConferenceBackground = memo(function ConferenceBackground() {
             })
           )}
           {nodes.map((n, i) => (
-            <circle key={i} cx={`${n.x}%`} cy={`${n.y}%`} r={n.r} fill="#ffffff" className="tech-node will-change-transform"
+            <circle key={i} cx={`${n.x}%`} cy={`${n.y}%`} r={n.r} fill="#ffffff" className="tech-node"
               style={{ animationDuration: `${Math.random() * 8 + 5}s`, animationDelay: `${Math.random() * -5}s` }}
             />
           ))}
@@ -146,13 +146,13 @@ const ConferenceBackground = memo(function ConferenceBackground() {
       </div>
 
       {/* Floating Icons (Removed backdrop-blur, added will-change, reduced count) */}
-      <div className="absolute inset-0 z-10 opacity-80">
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
         {iconNodes.map((node, i) => {
           const IconComponent = FloatingIcons[node.iconIndex];
           return (
             <div
               key={`icon-${i}`}
-              className="absolute text-cyan-100 bg-[#004080] p-3 rounded-full border border-cyan-400/40 shadow-lg tech-node will-change-transform"
+              className="absolute text-cyan-100 bg-[#004080] p-3 rounded-full border border-cyan-400/40 shadow-lg tech-node"
               style={{
                 left: `${node.x}%`,
                 top: `${node.y}%`,

@@ -257,10 +257,10 @@ export default function FlipbookViewer() {
         // @ts-ignore
         <HTMLFlipBook
             key={isDesktop ? "desktop" : "mobile"}
-            width={563} height={756} size="fixed" maxShadowOpacity={0.4}
+            width={563} height={756} size="fixed" maxShadowOpacity={0.2}
             showCover={true} mobileScrollSupport={true} className="w-full h-full" ref={bookRef}
             onInit={() => { setIsReady(true); }}
-            onFlip={handleFlip} usePortrait={!isDesktop} drawShadow={true} flippingTime={650}
+            onFlip={handleFlip} usePortrait={!isDesktop} drawShadow={isDesktop} flippingTime={650}
             startPage={currentPage}
         >
             {bookPagesToRender}
