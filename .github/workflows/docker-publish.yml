@@ -107,13 +107,13 @@ jobs:
             echo "Deploying image: $IMAGE_NAME:$IMAGE_TAG"
             
             # 2. Đăng nhập vào GHCR để pull image (Dùng token của Github Actions)
-            echo "$GH_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "$GH_TOKEN" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             # 3. Kéo image MỚI NHẤT ứng với mã SHA của commit này
-            docker compose pull
+            sudo -E docker compose pull
             
             # 4. Khởi động lại ứng dụng (Zero-downtime recreation)
-            docker compose up -d
+            sudo -E docker compose up -d
             
             # 5. Dọn dẹp rác (xóa các image cũ để tránh đầy ổ cứng VPS)
-            docker image prune -af
+            sudo docker image prune -af
