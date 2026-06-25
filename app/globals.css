@@ -1,9 +1,25 @@
 @import "tailwindcss";
-@config "../tailwind.config.js";
 
 @theme {
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-serif), ui-serif, Georgia, serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --text-3xs: 8px;
+  --text-3xs--line-height: 10px;
+  --text-2xs: 10px;
+  --text-2xs--line-height: 14px;
 }
 
 :root {
@@ -22,8 +38,8 @@
 
 html,
 body {
-  background-color: #0c4a6e;
-  background-image: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.15) 0%, rgba(12, 74, 110, 1) 100%);
+  background-color: #020617;
+  background-image: radial-gradient(circle at 50% 0%, #0f172a 0%, #020617 70%);
   color: #fafafa;
   width: 100%;
   height: 100%;
@@ -64,329 +80,49 @@ body {
   background: rgba(138, 90, 53, 0.6);
 }
 
-/* --- Nature Background Animations --- */
-@keyframes wind-blow {
+/* --- Tech Background Animations --- */
+@keyframes float {
   0% {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0;
+    transform: translateY(0) scale(1);
+    opacity: 0.1;
   }
-
-  10% {
-    opacity: 0.6;
-  }
-
-  90% {
-    opacity: 0.6;
-  }
-
-  100% {
-    transform: translate3d(110vw, -10vh, 0) scale(0.5);
-    opacity: 0;
-  }
-}
-
-.wind-particle {
-  animation-name: wind-blow;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  will-change: transform;
-}
-
-/* --- Wave Animations --- */
-.waves {
-  position: relative;
-  width: 100%;
-  height: 35vh;
-  margin-bottom: -7px;
-}
-
-.parallax>use {
-  animation: move-forever 25s cubic-bezier(.55, .5, .45, .5) infinite;
-}
-
-.parallax>use:nth-child(1) {
-  animation-delay: -2s;
-  animation-duration: 7s;
-  opacity: 0.7;
-}
-
-.parallax>use:nth-child(2) {
-  animation-delay: -3s;
-  animation-duration: 10s;
-  opacity: 0.5;
-}
-
-.parallax>use:nth-child(3) {
-  animation-delay: -4s;
-  animation-duration: 13s;
-  opacity: 0.3;
-}
-
-.parallax>use:nth-child(4) {
-  animation-delay: -5s;
-  animation-duration: 20s;
-  opacity: 1;
-}
-
-@keyframes move-forever {
-  0% {
-    transform: translate3d(-90px, 0, 0);
-  }
-
-  100% {
-    transform: translate3d(85px, 0, 0);
-  }
-}
-
-/* --- Coffee Bean Animation --- */
-@keyframes float-coffee {
-  0% {
-    transform: translateY(-10vh) rotate(0deg);
-    opacity: 0;
-  }
-
-  10% {
+  50% {
+    transform: translateY(-20px) scale(1.2);
     opacity: 0.8;
   }
-
-  90% {
-    opacity: 0.8;
-  }
-
   100% {
-    transform: translateY(110vh) rotate(360deg);
-    opacity: 0;
+    transform: translateY(0) scale(1);
+    opacity: 0.1;
   }
 }
 
-.coffee-bean {
-  position: absolute;
-  animation-name: float-coffee;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
+.tech-node {
+  animation: float linear infinite;
+  will-change: transform, opacity;
 }
 
-/* --- Sun Animation --- */
-@keyframes spin-slow {
-  100% {
-    transform: rotate(360deg);
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
   }
 }
 
-.sun-spin {
-  animation: spin-slow 60s linear infinite;
-  transform-origin: center;
+.tech-line-1 {
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 2000;
+  animation: dash 20s linear infinite;
 }
 
-/* --- Tuna Swimming Animation --- */
-@keyframes swim-right {
-  0% {
-    transform: translate3d(-15vw, 0, 0) scaleX(1);
-  }
-
-  49.9% {
-    transform: translate3d(110vw, 0, 0) scaleX(1);
-  }
-
-  50% {
-    transform: translate3d(110vw, 0, 0) scaleX(-1);
-  }
-
-  99.9% {
-    transform: translate3d(-15vw, 0, 0) scaleX(-1);
-  }
-
-  100% {
-    transform: translate3d(-15vw, 0, 0) scaleX(1);
-  }
+.tech-line-2 {
+  stroke-dasharray: 1500;
+  stroke-dashoffset: 1500;
+  animation: dash 15s linear infinite;
 }
 
-@keyframes swim-left {
-  0% {
-    transform: translate3d(110vw, 0, 0) scaleX(-1);
-  }
-
-  49.9% {
-    transform: translate3d(-15vw, 0, 0) scaleX(-1);
-  }
-
-  50% {
-    transform: translate3d(-15vw, 0, 0) scaleX(1);
-  }
-
-  99.9% {
-    transform: translate3d(110vw, 0, 0) scaleX(1);
-  }
-
-  100% {
-    transform: translate3d(110vw, 0, 0) scaleX(-1);
-  }
-}
-
-.tuna {
-  position: absolute;
-  left: 0;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  z-index: 10;
-}
-
-.tuna-1 {
-  animation-name: swim-right;
-  animation-duration: 35s;
-  animation-delay: -5s;
-  bottom: 12vh;
-}
-
-.tuna-2 {
-  animation-name: swim-left;
-  animation-duration: 45s;
-  animation-delay: -20s;
-  bottom: 8vh;
-}
-
-.tuna-3 {
-  animation-name: swim-right;
-  animation-duration: 40s;
-  animation-delay: -15s;
-  bottom: 4vh;
-}
-
-/* --- Fish Wave Motions --- */
-@keyframes fish-wave-1 {
-
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) rotate(-6deg);
-  }
-
-  25% {
-    transform: translate3d(0, -30px, 0) rotate(0deg);
-  }
-
-  50% {
-    transform: translate3d(0, 0, 0) rotate(6deg);
-  }
-
-  75% {
-    transform: translate3d(0, 30px, 0) rotate(0deg);
-  }
-}
-
-.fish-wave-1 {
-  animation: fish-wave-1 7s ease-in-out infinite;
-}
-
-@keyframes fish-wave-2 {
-
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) rotate(-8deg);
-  }
-
-  25% {
-    transform: translate3d(0, -40px, 0) rotate(0deg);
-  }
-
-  50% {
-    transform: translate3d(0, 0, 0) rotate(8deg);
-  }
-
-  75% {
-    transform: translate3d(0, 40px, 0) rotate(0deg);
-  }
-}
-
-.fish-wave-2 {
-  animation: fish-wave-2 10s ease-in-out infinite;
-}
-
-@keyframes fish-wave-3 {
-
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) rotate(-4deg);
-  }
-
-  25% {
-    transform: translate3d(0, -20px, 0) rotate(0deg);
-  }
-
-  50% {
-    transform: translate3d(0, 0, 0) rotate(4deg);
-  }
-
-  75% {
-    transform: translate3d(0, 20px, 0) rotate(0deg);
-  }
-}
-
-.fish-wave-3 {
-  animation: fish-wave-3 13s ease-in-out infinite;
-}
-
-@keyframes tail-wag-anim {
-
-  0%,
-  100% {
-    transform: scaleX(1) skewY(-10deg);
-  }
-
-  50% {
-    transform: scaleX(0.5) skewY(10deg);
-  }
-}
-
-.tail-wag {
-  animation: tail-wag-anim 0.5s ease-in-out infinite;
-}
-
-@keyframes pectoral-flap-anim {
-
-  0%,
-  100% {
-    transform: rotate(0deg) scaleY(1);
-  }
-
-  50% {
-    transform: rotate(20deg) scaleY(0.7);
-  }
-}
-
-.pectoral-flap {
-  animation: pectoral-flap-anim 0.5s ease-in-out infinite;
-}
-
-@keyframes dorsal-flap-anim {
-
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-
-  50% {
-    transform: rotate(-15deg);
-  }
-}
-
-.dorsal-flap {
-  animation: dorsal-flap-anim 0.8s ease-in-out infinite;
-}
-
-@keyframes anal-flap-anim {
-
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-
-  50% {
-    transform: rotate(15deg);
-  }
-}
-
-.anal-flap {
-  animation: anal-flap-anim 0.8s ease-in-out infinite;
+.tech-line-3 {
+  stroke-dasharray: 3000;
+  stroke-dashoffset: 3000;
+  animation: dash 25s linear infinite;
 }
 
 /* --- Utility Animations --- */

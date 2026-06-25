@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import { useScreenSize } from "../hooks/useScreenSize";
 import {
     ZoomIn, ZoomOut, Maximize, Minimize, Volume2, VolumeX,
@@ -21,12 +21,13 @@ interface ToolbarProps {
     isDesktop?: boolean;
     mobileLang?: 'vi' | 'en';
     onLanguageToggle?: (lang: 'vi' | 'en') => void;
+    macroGroupsMenu?: { name: string; pageIndex: number }[];
 }
 
 const Toolbar = memo(function Toolbar({
     inputPage, totalPages, zoom, soundEnabled, isFullscreen,
     setInputPage, handlePageInput, goToPage, bookRef, setZoom, setSoundEnabled, toggleFullscreen,
-    isDesktop, mobileLang, onLanguageToggle
+    isDesktop, mobileLang, onLanguageToggle, macroGroupsMenu
 }: ToolbarProps) {
     const { isSm, isMd, isLg, isLoaded } = useScreenSize();
 

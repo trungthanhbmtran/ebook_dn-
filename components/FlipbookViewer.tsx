@@ -5,15 +5,15 @@ import { flushSync } from 'react-dom';
 import HTMLFlipBook from "react-pageflip";
 import Image from "next/image";
 import Toolbar from "./Toolbar";
-import { ChevronLeft, ChevronRight, Search, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, ZoomIn, ZoomOut, X, List, Menu } from "lucide-react";
 import { flipbookStore, LazyPageContent } from "./LazyPageContent";
 
 import { Cover } from "./book/Cover";
 import { BackCover } from "./book/BackCover";
 import { PdfPage } from "./book/PdfPage";
 import { useScreenSize } from '../hooks/useScreenSize';
-import MacroTab from './MacroTab';
-import NatureBackground from './NatureBackground';
+
+import ConferenceBackground from './ConferenceBackground';
 
 interface MacroFolder {
     name: string;
@@ -50,13 +50,14 @@ export default function FlipbookViewer() {
     const [baseScale, setBaseScale] = useState(1);
     const [inputPage, setInputPage] = useState("1");
     const [isReady, setIsReady] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const updateScale = useCallback(() => {
         const targetWidth = isDesktop ? 1126 : 563;
         const targetHeight = 756;
 
-        const horizontalMargin = isDesktop ? 220 : 70;
-        const verticalMargin = isDesktop ? 80 : 20;
+        const horizontalMargin = isDesktop ? 120 : 40;
+        const verticalMargin = isDesktop ? 220 : 160;
 
         const screenW = window.innerWidth - horizontalMargin;
         const screenH = window.innerHeight - 50 - verticalMargin;
@@ -268,10 +269,10 @@ export default function FlipbookViewer() {
 
     if (!isLoaded || folders.length === 0) {
         return (
-            <div className="flex h-[100dvh] w-full items-center justify-center bg-[#faf8f4]">
+            <div className="flex h-[100dvh] w-full items-center justify-center bg-gradient-to-br from-[#002b5e] via-[#0056b3] to-[#0099ff]">
                 <div className="animate-pulse flex flex-col items-center">
-                    <div className="h-12 w-12 rounded-full border-4 border-[#cba365] border-t-transparent animate-spin mb-4"></div>
-                    <p className="text-[#a0622a] font-bold text-lg tracking-wider">ĐANG TẢI DỮ LIỆU SÁCH...</p>
+                    <div className="h-12 w-12 rounded-full border-4 border-white/30 border-t-white animate-spin mb-4 shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
+                    <p className="text-white font-bold text-sm tracking-widest uppercase drop-shadow-md">Đang tải dữ liệu sách...</p>
                 </div>
             </div>
         );
@@ -281,8 +282,56 @@ export default function FlipbookViewer() {
         <>
             <div ref={containerRef} className="flex flex-col h-[100dvh] w-full font-sans overflow-hidden select-none relative back print:block print:h-auto print:overflow-visible print:w-full">
                 <div className="absolute inset-0 z-0 pointer-events-none print:hidden">
-                    <NatureBackground />
+                    <ConferenceBackground />
                 </div>
+
+                {/* Floating Top-Left Menu Button */}
+                {!isSidebarOpen && (
+                    <button 
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="absolute top-4 left-4 sm:top-6 sm:left-6 z-[80] p-2 sm:p-2.5 bg-[#0f172a]/70 backdrop-blur-md rounded-lg shadow-[0_4px_15px_rgba(0,0,0,0.3)] text-gray-300 hover:text-[#38bdf8] hover:bg-[#1e293b] border border-white/10 transition-all group print:hidden flex items-center gap-2"
+                        title="Mục lục"
+                    >
+                        <Menu size={22} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-semibold tracking-wide hidden sm:inline uppercase text-gray-300 group-hover:text-[#38bdf8] transition-colors">Mục lục</span>
+                    </button>
+                )}
+
+                {/* TOC Sidebar Overlay */}
+                <div className={`fixed inset-y-0 left-0 z-[100] w-80 bg-[#0f172a]/95 backdrop-blur-xl shadow-[5px_0_25px_rgba(0,0,0,0.5)] transform transition-transform duration-300 ease-in-out print:hidden flex flex-col border-r border-white/5 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                    <div className="flex items-center justify-between p-5 border-b border-white/10 bg-[#020617]/50">
+                        <h2 className="text-[#38bdf8] font-bold text-lg uppercase tracking-wider">Mục lục</h2>
+                        <button onClick={() => setIsSidebarOpen(false)} className="text-gray-400 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors">
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="flex-1 p-3 overflow-y-auto custom-scrollbar">
+                        {macroGroupsMenu.map((menu, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => {
+                                    goToPage(menu.pageIndex);
+                                    setIsSidebarOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-3 mb-1.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-all rounded-lg border-l-2 border-transparent hover:border-[#38bdf8] group flex flex-col gap-1"
+                            >
+                                <div className="font-medium line-clamp-2 group-hover:translate-x-1 transition-transform">{menu.name}</div>
+                                <div className="text-[10px] text-gray-500 group-hover:text-[#38bdf8] transition-colors">Trang {menu.pageIndex + 1}</div>
+                            </button>
+                        ))}
+                        {(!macroGroupsMenu || macroGroupsMenu.length === 0) && (
+                            <div className="px-4 py-3 text-sm text-gray-500 italic text-center mt-10">Mục lục trống</div>
+                        )}
+                    </div>
+                </div>
+                
+                {/* TOC Backdrop */}
+                {isSidebarOpen && (
+                    <div 
+                        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] print:hidden transition-opacity duration-300" 
+                        onClick={() => setIsSidebarOpen(false)} 
+                    />
+                )}
 
                 <audio ref={audioRef} src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto" />
 
@@ -305,9 +354,6 @@ export default function FlipbookViewer() {
                             <div className="relative flex items-center justify-center " style={{ width: isDesktop ? 1126 : 563, height: 756 }}>
 
                                 <div className="absolute right-[calc(100%-1px)] top-8 flex-col gap-1.5 z-0 flex">
-                                    {macroGroupsMenu.map((menu, mIdx) => (
-                                        <MacroTab key={`left-${mIdx}`} menu={menu} mIdx={mIdx} currentPage={currentPage} side="left" onTabClick={goToPage} onTabHover={setTargetPage} />
-                                    ))}
                                 </div>
 
                                 <div className={`relative w-full h-full z-10 ${zoom > 1 ? 'pointer-events-none' : ''}`}>
@@ -315,9 +361,6 @@ export default function FlipbookViewer() {
                                 </div>
 
                                 <div className="absolute left-[calc(100%-1px)] top-8 flex-col gap-1.5 z-0 flex">
-                                    {macroGroupsMenu.map((menu, mIdx) => (
-                                        <MacroTab key={`right-${mIdx}`} menu={menu} mIdx={mIdx} currentPage={currentPage} side="right" onTabClick={goToPage} onTabHover={setTargetPage} />
-                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -338,6 +381,7 @@ export default function FlipbookViewer() {
                     setSoundEnabled={setSoundEnabled}
                     toggleFullscreen={() => setIsFullscreen(!isFullscreen)}
                     isDesktop={isDesktop}
+                    macroGroupsMenu={macroGroupsMenu}
                 />
             </div>
         </>

@@ -2,7 +2,7 @@
 const nextConfig = {
   output: 'standalone',
   // Thêm các cấu hình Next.js khác nếu cần
-  // allowedDevOrigins: ['14.174.183.97'],
+  // allowedDevOrigins: ['113.176.130.161'],
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 31536000, // cache 1 năm

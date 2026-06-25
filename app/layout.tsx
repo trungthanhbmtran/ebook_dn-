@@ -1,7 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
-import ZaloScript from './ZaloScript';
 
 const inter = Inter({
   subsets: ['latin', 'vietnamese'],
@@ -40,9 +39,7 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className={`${inter.variable} ${playfair.variable} font-sans`}>
-        {/* <ZaloScript> */}
         {children}
-        {/* </ZaloScript> */}
       </body>
     </html >
   );
