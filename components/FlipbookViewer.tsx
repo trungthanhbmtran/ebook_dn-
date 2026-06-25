@@ -110,7 +110,7 @@ export default function FlipbookViewer() {
 
             folder.pages.forEach((pageUrl, pageIdx) => {
                 const isPdf = pageUrl.toLowerCase().endsWith('.pdf');
-                
+
                 // Keep the book shadow styling for inner pages
                 const isLeftPage = isDesktop && (currentIndex % 2 !== 0);
 
@@ -133,15 +133,15 @@ export default function FlipbookViewer() {
                                 {isPdf ? (
                                     <PdfPage fileUrl={pageUrl} width={563} />
                                 ) : (
-                                    <Image 
-                                        src={pageUrl} 
-                                        alt={`Page ${currentIndex}`} 
+                                    <Image
+                                        src={pageUrl}
+                                        alt={`Page ${currentIndex}`}
                                         fill
                                         sizes="(max-width: 768px) 100vw, 50vw"
                                         quality={100}
                                         unoptimized={true}
                                         priority={currentIndex <= 4}
-                                        className="object-contain" 
+                                        className="object-contain"
                                     />
                                 )}
                             </LazyPageContent>
@@ -226,7 +226,7 @@ export default function FlipbookViewer() {
     const goToPage = useCallback((pageIndex: number) => {
         if (bookRef.current?.pageFlip()) {
             setTargetPage(pageIndex);
-            
+
             // Đợi 100ms để React kịp render ảnh vào DOM thay cho thẻ "Đang tải...",
             // giúp hiệu ứng lật trang của react-pageflip không chụp nhầm khung hình loading
             setTimeout(() => {
@@ -287,9 +287,9 @@ export default function FlipbookViewer() {
 
                 {/* Floating Top-Left Menu Button */}
                 {!isSidebarOpen && (
-                    <button 
+                    <button
                         onClick={() => setIsSidebarOpen(true)}
-                        className="absolute top-4 left-4 sm:top-6 sm:left-6 z-[80] p-2 sm:p-2.5 bg-[#0f172a]/70 backdrop-blur-md rounded-lg shadow-[0_4px_15px_rgba(0,0,0,0.3)] text-gray-300 hover:text-[#38bdf8] hover:bg-[#1e293b] border border-white/10 transition-all group print:hidden flex items-center gap-2"
+                        className="absolute top-20 left-4 sm:top-24 sm:left-6 z-[80] p-2 sm:p-2.5 bg-[#0f172a]/70 backdrop-blur-md rounded-lg shadow-[0_4px_15px_rgba(0,0,0,0.3)] text-gray-300 hover:text-[#38bdf8] hover:bg-[#1e293b] border border-white/10 transition-all group print:hidden flex items-center gap-2"
                         title="Mục lục"
                     >
                         <Menu size={22} className="group-hover:scale-110 transition-transform" />
@@ -324,12 +324,12 @@ export default function FlipbookViewer() {
                         )}
                     </div>
                 </div>
-                
+
                 {/* TOC Backdrop */}
                 {isSidebarOpen && (
-                    <div 
-                        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] print:hidden transition-opacity duration-300" 
-                        onClick={() => setIsSidebarOpen(false)} 
+                    <div
+                        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] print:hidden transition-opacity duration-300"
+                        onClick={() => setIsSidebarOpen(false)}
                     />
                 )}
 
