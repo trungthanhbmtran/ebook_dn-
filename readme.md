@@ -119,3 +119,7 @@ sudo certbot --nginx -d sachdautu.com -d www.sachdautu.com
 
 sudo docker compose pull
 sudo docker compose up -d
+
+cd ebook_dn-
+git pull
+sudo docker compose pull && sudo docker compose up -d
