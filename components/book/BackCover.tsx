@@ -5,7 +5,7 @@ export function BackCover() {
     return (
         <div className="w-full h-full relative overflow-hidden bg-white">
             <Image
-                src="/BackCover.jfif"
+                src="/backcover.jfif"
                 alt="Back Cover"
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
