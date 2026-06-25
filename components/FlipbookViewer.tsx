@@ -289,7 +289,7 @@ export default function FlipbookViewer() {
                 {!isSidebarOpen && (
                     <button
                         onClick={() => setIsSidebarOpen(true)}
-                        className="absolute top-20 left-4 sm:top-24 sm:left-6 z-[80] p-2 sm:p-2.5 bg-[#0f172a]/70 backdrop-blur-md rounded-lg shadow-[0_4px_15px_rgba(0,0,0,0.3)] text-gray-300 hover:text-[#38bdf8] hover:bg-[#1e293b] border border-white/10 transition-all group print:hidden flex items-center gap-2"
+                        className="absolute top-4 left-4 sm:top-6 sm:left-6 z-[80] p-2 sm:p-2.5 bg-[#0f172a]/70 backdrop-blur-md rounded-lg shadow-[0_4px_15px_rgba(0,0,0,0.3)] text-gray-300 hover:text-[#38bdf8] hover:bg-[#1e293b] border border-white/10 transition-all group print:hidden flex items-center gap-2"
                         title="Mục lục"
                     >
                         <Menu size={22} className="group-hover:scale-110 transition-transform" />

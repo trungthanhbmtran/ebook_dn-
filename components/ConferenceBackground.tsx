@@ -101,7 +101,7 @@ const ConferenceBackground = memo(function ConferenceBackground() {
       </div>
 
       {/* Watermark Text - Horizontal Banners (Text shadow is fine because it's static) */}
-      <div className="absolute top-[3vh] sm:top-[5vh] left-0 w-full flex flex-col items-center opacity-90 select-none z-10 px-4">
+      <div className="absolute top-[12vh] sm:top-[5vh] md:top-[3vh] left-0 w-full flex flex-col items-center opacity-90 select-none z-10 px-4">
         <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-white leading-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] text-center whitespace-nowrap">
           SỞ KHOA HỌC & CÔNG NGHỆ <span className="text-[#a5f3fc]">ĐẮK LẮK</span>
         </h1>
