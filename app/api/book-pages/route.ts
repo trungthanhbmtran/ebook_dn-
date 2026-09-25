@@ -2,8 +2,17 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+let cachedMacros: any = null;
+let lastCacheTime = 0;
+
 export async function GET() {
     try {
+        const now = Date.now();
+        // Cache trong 10 giây (giúp dev mode không bị spam đọc file, production chạy siêu nhanh)
+        if (cachedMacros && now - lastCacheTime < 10000) {
+            return NextResponse.json({ macros: cachedMacros });
+        }
+
         const publicDir = path.join(process.cwd(), 'public');
         const pagesDir = path.join(publicDir, 'book-pages');
 
@@ -22,9 +31,9 @@ export async function GET() {
         for (const folder of folders) {
             const folderPath = path.join(pagesDir, folder);
             
-            // Read all files in this folder (e.g. .pdf, .jpg, .png)
+            // Chỉ đọc các file ảnh (webp, jpg, png, etc.) để hiển thị trên sách, bỏ qua file .txt
             const files = fs.readdirSync(folderPath)
-                .filter(file => !file.startsWith('.'))
+                .filter(file => !file.startsWith('.') && /\.(webp|jpg|jpeg|png|avif)$/i.test(file))
                 // Sort naturally so e.g. page_2.jpg comes before page_10.jpg
                 .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
@@ -34,6 +43,8 @@ export async function GET() {
             });
         }
 
+        cachedMacros = macros;
+        lastCacheTime = now;
         return NextResponse.json({ macros });
     } catch (error) {
         console.error('Error reading book pages:', error);

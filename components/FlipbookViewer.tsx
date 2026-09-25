@@ -1,16 +1,15 @@
 'use client';
 
 import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
-import { flushSync } from 'react-dom';
+// import { flushSync } from 'react-dom';
 import HTMLFlipBook from "react-pageflip";
-import Image from "next/image";
+// import Image from "next/image";
 import Toolbar from "./Toolbar";
 import { ChevronLeft, ChevronRight, Search, ZoomIn, ZoomOut, X, List, Menu } from "lucide-react";
 import { flipbookStore, LazyPageContent } from "./LazyPageContent";
 
 import { Cover } from "./book/Cover";
 import { BackCover } from "./book/BackCover";
-import { PdfPage } from "./book/PdfPage";
 import { useScreenSize } from '../hooks/useScreenSize';
 
 import ConferenceBackground from './ConferenceBackground';
@@ -109,7 +108,6 @@ export default function FlipbookViewer() {
             }
 
             folder.pages.forEach((pageUrl, pageIdx) => {
-                const isPdf = pageUrl.toLowerCase().endsWith('.pdf');
 
                 // Keep the book shadow styling for inner pages
                 const isLeftPage = isDesktop && (currentIndex % 2 !== 0);
@@ -130,20 +128,14 @@ export default function FlipbookViewer() {
 
                         <div className="w-full h-full relative z-10">
                             <LazyPageContent pageIndex={currentIndex}>
-                                {isPdf ? (
-                                    <PdfPage fileUrl={pageUrl} width={563} />
-                                ) : (
-                                    <Image
-                                        src={pageUrl}
-                                        alt={`Page ${currentIndex}`}
-                                        fill
-                                        sizes="(max-width: 768px) 100vw, 50vw"
-                                        quality={100}
-                                        unoptimized={true}
-                                        priority={currentIndex <= 4}
-                                        className="object-contain"
-                                    />
-                                )}
+                                <img
+                                    src={pageUrl}
+                                    alt={`Page ${currentIndex}`}
+                                    className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+                                    decoding="async"
+                                    fetchPriority="high"
+                                    draggable={false}
+                                />
                             </LazyPageContent>
                         </div>
                     </div>
@@ -227,13 +219,13 @@ export default function FlipbookViewer() {
         if (bookRef.current?.pageFlip()) {
             setTargetPage(pageIndex);
 
-            // Đợi 100ms để React kịp render ảnh vào DOM thay cho thẻ "Đang tải...",
-            // giúp hiệu ứng lật trang của react-pageflip không chụp nhầm khung hình loading
+            // Vì dùng WebP nhẹ, DOM update rất nhanh, giảm thời gian chờ xuống 30ms 
+            // để thao tác chuyển trang qua mục lục hoặc tìm kiếm tức thì hơn.
             setTimeout(() => {
                 if (bookRef.current?.pageFlip()) {
                     bookRef.current.pageFlip().flip(pageIndex);
                 }
-            }, 100);
+            }, 30);
         }
     }, []);
 
@@ -260,7 +252,7 @@ export default function FlipbookViewer() {
             width={563} height={756} size="fixed" maxShadowOpacity={0.2}
             showCover={true} mobileScrollSupport={true} className="w-full h-full" ref={bookRef}
             onInit={() => { setIsReady(true); }}
-            onFlip={handleFlip} usePortrait={!isDesktop} drawShadow={isDesktop} flippingTime={650}
+            onFlip={handleFlip} usePortrait={!isDesktop} drawShadow={isDesktop} flippingTime={450} // Giảm thời gian lật trang xuống 450ms để có cảm giác snappier
             startPage={currentPage}
         >
             {bookPagesToRender}

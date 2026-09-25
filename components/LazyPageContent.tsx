@@ -34,13 +34,11 @@ export const LazyPageContent = memo(({ pageIndex, alwaysRender = false, children
 
         const checkVisibility = () => {
             const { currentPage, targetPage, isDesktop } = flipbookStore.getState();
-            const preloadDistance = isDesktop ? 6 : 2;
+            // Tăng preloadDistance lên 10 để bao phủ mượt mà, nhưng SẼ UNMOUNT các trang quá xa để giải phóng RAM
+            const preloadDistance = isDesktop ? 10 : 6;
             const newIsVisible = Math.abs(currentPage - pageIndex) <= preloadDistance || Math.abs(targetPage - pageIndex) <= preloadDistance;
 
-            setIsVisible(prev => {
-                if (prev !== newIsVisible) return newIsVisible;
-                return prev;
-            });
+            setIsVisible(newIsVisible);
         };
 
         checkVisibility();
