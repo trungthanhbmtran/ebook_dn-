@@ -23,7 +23,7 @@ export default function FlipbookViewer() {
     const [folders, setFolders] = useState<MacroFolder[]>([]);
 
     useEffect(() => {
-        fetch('/api/book-pages')
+        fetch('/api/book-pages?t=' + Date.now())
             .then(res => res.json())
             .then(data => {
                 if (data.macros) {
