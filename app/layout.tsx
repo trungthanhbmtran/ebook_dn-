@@ -13,8 +13,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'Danh Mục Dự Án Đầu Tư',
-  description: 'Sách lật tổng hợp các dự án kêu gọi đầu tư tỉnh Đắk Lắk giai đoạn 2026-2030',
+  title: 'Sách Tài liệu',
+  description: 'Sách Tài liệu hội thảo',
   other: {
     // Tắt auto-detect số điện thoại/email trên iOS WebView
     'format-detection': 'telephone=no, email=no, address=no',
