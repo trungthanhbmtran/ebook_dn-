@@ -4,26 +4,73 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
-let cachedMacros: any = null;
+let cachedData: any = null;
 
-export async function GET() {
+function buildBookData(folders: any[], isDesktop: boolean) {
+    const pages = [];
+    const macroGroupsMenu = [];
+
+    pages.push({ type: 'cover' });
+
+    let currentIndex = 1;
+
+    folders.forEach((folder) => {
+        if (isDesktop && currentIndex % 2 === 0) {
+            pages.push({ type: 'blank' });
+            currentIndex++;
+        }
+
+        if (!folder.name.toUpperCase().includes("0 MUC LUC") && !folder.name.toUpperCase().includes("0 MťC LụC")) {
+            macroGroupsMenu.push({
+                name: folder.name,
+                pageIndex: currentIndex
+            });
+        }
+
+        folder.pages.forEach((pageUrl: string) => {
+            const isLeftPage = isDesktop && (currentIndex % 2 !== 0);
+            pages.push({
+                type: 'image',
+                src: pageUrl,
+                isLeftPage
+            });
+            currentIndex++;
+        });
+    });
+
+    if (isDesktop) {
+        while (pages.length % 2 === 0) {
+            pages.push({ type: 'blank' });
+        }
+    }
+
+    pages.push({ type: 'back-cover' });
+
+    return {
+        pages,
+        macroGroupsMenu,
+        totalPages: pages.length
+    };
+}
+
+export async function GET(request: Request) {
     try {
-        // Cache vĩnh viễn trong RAM (chỉ reset khi khởi động lại server/Docker)
-        // Giúp loại bỏ hoàn toàn tình trạng treo "Đang khởi tạo không gian..." trên VPS yếu
-        if (cachedMacros) {
-            return NextResponse.json({ macros: cachedMacros });
+        const { searchParams } = new URL(request.url);
+        const isDesktop = searchParams.get('isDesktop') !== 'false';
+        
+        if (cachedData) {
+            return NextResponse.json(isDesktop ? cachedData.desktop : cachedData.mobile);
         }
 
         const publicDir = path.join(process.cwd(), 'public');
         const pagesDir = path.join(publicDir, 'book-pages');
 
         if (!fs.existsSync(pagesDir)) {
-            return NextResponse.json({ macros: [] });
+            return NextResponse.json({ pages: [], macroGroupsMenu: [], totalPages: 0 });
         }
 
         const macros: any[] = [];
         
-        // Read directories inside book-pages and sort them naturally
         const folders = fs.readdirSync(pagesDir, { withFileTypes: true })
             .filter(dirent => dirent.isDirectory())
             .map(dirent => dirent.name)
@@ -32,10 +79,8 @@ export async function GET() {
         for (const folder of folders) {
             const folderPath = path.join(pagesDir, folder);
             
-            // Chỉ đọc các file ảnh (webp, jpg, png, etc.) để hiển thị trên sách, bỏ qua file .txt
             const files = fs.readdirSync(folderPath)
                 .filter(file => !file.startsWith('.') && /\.(webp|jpg|jpeg|png|avif)$/i.test(file))
-                // Sort naturally so e.g. page_2.jpg comes before page_10.jpg
                 .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
             macros.push({
@@ -44,8 +89,15 @@ export async function GET() {
             });
         }
 
-        cachedMacros = macros;
-        return NextResponse.json({ macros });
+        const desktopData = buildBookData(macros, true);
+        const mobileData = buildBookData(macros, false);
+
+        cachedData = {
+            desktop: desktopData,
+            mobile: mobileData
+        };
+
+        return NextResponse.json(isDesktop ? desktopData : mobileData);
     } catch (error) {
         console.error('Error reading book pages:', error);
         return NextResponse.json({ error: 'Failed to read pages' }, { status: 500 });

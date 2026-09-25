@@ -20,18 +20,20 @@ interface MacroFolder {
 }
 
 export default function FlipbookViewer() {
-    const [folders, setFolders] = useState<MacroFolder[]>([]);
+    const { isLg: isDesktop, isLoaded } = useScreenSize();
+    const [bookData, setBookData] = useState<{ pages: any[], macroGroupsMenu: any[], totalPages: number } | null>(null);
 
     useEffect(() => {
-        fetch('/api/book-pages?t=' + Date.now())
+        if (isDesktop === undefined) return;
+        fetch('/api/book-pages?t=' + Date.now() + '&isDesktop=' + isDesktop)
             .then(res => res.json())
             .then(data => {
-                if (data.macros) {
-                    setFolders(data.macros);
+                if (data.pages) {
+                    setBookData(data);
                 }
             })
             .catch(console.error);
-    }, []);
+    }, [isDesktop]);
 
     const bookRef = useRef<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -39,7 +41,6 @@ export default function FlipbookViewer() {
     const audioRef = useRef<HTMLAudioElement>(null);
     const lastFlipTime = useRef<number>(0);
 
-    const { isLg: isDesktop, isLoaded } = useScreenSize();
 
     const [currentPage, setCurrentPage] = useState(0);
     const [targetPage, setTargetPage] = useState(0);
@@ -77,91 +78,53 @@ export default function FlipbookViewer() {
         };
     }, [updateScale]);
 
-    const { macroGroupsMenu, totalPages, bookPagesToRender } = useMemo(() => {
-        const bookPagesToRender: React.ReactNode[] = [];
-        const macroGroupsMenu: any[] = [];
+    const macroGroupsMenu = bookData?.macroGroupsMenu || [];
+    const totalPages = bookData?.totalPages || 0;
 
-        bookPagesToRender.push(
-            <div key="front-cover" className="page-wrapper h-full">
-                <Cover />
-            </div>
-        );
-
-        let currentIndex = 1;
-
-        folders.forEach((folder, folderIndex) => {
-            // Đảm bảo "hình ảnh tổng thể" (trang đầu tiên của thư mục) luôn nằm ở mặt TRÁI (index lẻ)
-            // và trang tiếp theo (trang nội dung) nằm ở mặt PHẢI (index chẵn)
-            if (isDesktop && currentIndex % 2 === 0) {
-                bookPagesToRender.push(
-                    <div key={`blank-folder-pad-${currentIndex}`} className="page-light bg-white w-full h-full bg-gradient-to-l from-black/5 to-transparent"></div>
-                );
-                currentIndex++;
-            }
-
-            // Không hiển thị "0 MỤC LỤC DỰ ÁN" lên thẻ đánh dấu (Macro Tab)
-            if (!folder.name.toUpperCase().includes("0 MỤC LỤC") && !folder.name.toUpperCase().includes("0 MUC LUC")) {
-                macroGroupsMenu.push({
-                    name: folder.name,
-                    pageIndex: currentIndex
-                });
-            }
-
-            folder.pages.forEach((pageUrl, pageIdx) => {
-
-                // Keep the book shadow styling for inner pages
-                const isLeftPage = isDesktop && (currentIndex % 2 !== 0);
-
-                bookPagesToRender.push(
-                    <div key={`page-${currentIndex}`} className="page-wrapper h-full bg-white relative flex items-center justify-center overflow-hidden">
-
-                        {/* Page Shadow Details */}
-                        {isDesktop && (
-                            <>
-                                {isLeftPage ? (
-                                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none z-30"></div>
-                                ) : (
-                                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/10 to-transparent pointer-events-none z-30"></div>
-                                )}
-                            </>
-                        )}
-
-                        <div className="w-full h-full relative z-10">
-                            <LazyPageContent pageIndex={currentIndex}>
-                                <img
-                                    src={pageUrl}
-                                    alt={`Page ${currentIndex}`}
-                                    className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
-                                    decoding="async"
-                                    fetchPriority="high"
-                                    draggable={false}
-                                />
-                            </LazyPageContent>
-                        </div>
+    const bookPagesToRender = useMemo(() => {
+        if (!bookData) return [];
+        return bookData.pages.map((p, idx) => {
+            if (p.type === 'cover') return (
+                <div key={"page-"+idx} className="page-wrapper h-full">
+                    <Cover />
+                </div>
+            );
+            if (p.type === 'back-cover') return (
+                <div key={"page-"+idx} className="page-wrapper h-full">
+                    <BackCover />
+                </div>
+            );
+            if (p.type === 'blank') return (
+                <div key={"page-"+idx} className="page-light bg-white w-full h-full bg-gradient-to-l from-black/5 to-transparent"></div>
+            );
+            if (p.type === 'image') return (
+                <div key={"page-"+idx} className="page-wrapper h-full bg-white relative flex items-center justify-center overflow-hidden">
+                    {isDesktop && (
+                        <>
+                            {p.isLeftPage ? (
+                                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none z-30"></div>
+                            ) : (
+                                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/10 to-transparent pointer-events-none z-30"></div>
+                            )}
+                        </>
+                    )}
+                    <div className="w-full h-full relative z-10">
+                        <LazyPageContent pageIndex={idx}>
+                            <img
+                                src={p.src}
+                                alt={"Page "+idx}
+                                className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+                                decoding="async"
+                                fetchPriority="high"
+                                draggable={false}
+                            />
+                        </LazyPageContent>
                     </div>
-                );
-                currentIndex++;
-            });
+                </div>
+            );
+            return null;
         });
-
-        if (isDesktop) {
-            // Đảm bảo tổng số trang TRƯỚC KHI chèn bìa sau là số lẻ
-            // Để khi chèn bìa sau vào, tổng số trang là chẵn, bìa sau sẽ nằm ở mặt trái của tờ cuối cùng
-            while (bookPagesToRender.length % 2 === 0) {
-                bookPagesToRender.push(
-                    <div key={`blank-${bookPagesToRender.length}`} className="page-light bg-white w-full h-full bg-gradient-to-l from-black/5 to-transparent"></div>
-                );
-            }
-        }
-
-        bookPagesToRender.push(
-            <div key="back-cover" className="page-wrapper h-full">
-                <BackCover />
-            </div>
-        );
-
-        return { macroGroupsMenu, totalPages: bookPagesToRender.length, bookPagesToRender };
-    }, [isDesktop, folders]);
+    }, [bookData, isDesktop]);
 
     useEffect(() => {
         const scrollZone = bookAreaRef.current;
@@ -211,7 +174,7 @@ export default function FlipbookViewer() {
             }
         }
 
-        // Tối ưu hóa thuật toán O(1): Cập nhật store thay vì truyền qua Context
+        // Tá»‘i Æ°u hÃ³a thuáº­t toÃ¡n O(1): Cáº­p nháº­t store thay vÃ¬ truyá»n qua Context
         flipbookStore.setState({ currentPage, targetPage, isDesktop });
     }, [currentPage, targetPage, isDesktop, totalPages, isReady]);
 
@@ -219,8 +182,8 @@ export default function FlipbookViewer() {
         if (bookRef.current?.pageFlip()) {
             setTargetPage(pageIndex);
 
-            // Vì dùng WebP nhẹ, DOM update rất nhanh, giảm thời gian chờ xuống 30ms 
-            // để thao tác chuyển trang qua mục lục hoặc tìm kiếm tức thì hơn.
+            // VÃ¬ dÃ¹ng WebP nháº¹, DOM update ráº¥t nhanh, giáº£m thá»i gian chá» xuá»‘ng 30ms 
+            // Ä‘á»ƒ thao tÃ¡c chuyá»ƒn trang qua má»¥c lá»¥c hoáº·c tÃ¬m kiáº¿m tá»©c thÃ¬ hÆ¡n.
             setTimeout(() => {
                 if (bookRef.current?.pageFlip()) {
                     bookRef.current.pageFlip().flip(pageIndex);
@@ -252,19 +215,19 @@ export default function FlipbookViewer() {
             width={563} height={756} size="fixed" maxShadowOpacity={0.2}
             showCover={true} mobileScrollSupport={true} className="w-full h-full" ref={bookRef}
             onInit={() => { setIsReady(true); }}
-            onFlip={handleFlip} usePortrait={!isDesktop} drawShadow={isDesktop} flippingTime={450} // Giảm thời gian lật trang xuống 450ms để có cảm giác snappier
+            onFlip={handleFlip} usePortrait={!isDesktop} drawShadow={isDesktop} flippingTime={450} // Giáº£m thá»i gian láº­t trang xuá»‘ng 450ms Ä‘á»ƒ cÃ³ cáº£m giÃ¡c snappier
             startPage={currentPage}
         >
             {bookPagesToRender}
         </HTMLFlipBook>
     ), [isDesktop, handleFlip, bookPagesToRender]);
 
-    if (!isLoaded || folders.length === 0) {
+    if (!isLoaded || !bookData) {
         return (
             <div className="flex h-[100dvh] w-full items-center justify-center bg-gradient-to-br from-[#002b5e] via-[#0056b3] to-[#0099ff]">
                 <div className="animate-pulse flex flex-col items-center">
                     <div className="h-12 w-12 rounded-full border-4 border-white/30 border-t-white animate-spin mb-4 shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
-                    <p className="text-white font-bold text-sm tracking-widest uppercase drop-shadow-md">Đang tải dữ liệu sách...</p>
+                    <p className="text-white font-bold text-sm tracking-widest uppercase drop-shadow-md">Äang táº£i dá»¯ liá»‡u sÃ¡ch...</p>
                 </div>
             </div>
         );
@@ -282,17 +245,17 @@ export default function FlipbookViewer() {
                     <button
                         onClick={() => setIsSidebarOpen(true)}
                         className="absolute top-4 left-4 sm:top-6 sm:left-6 z-[80] p-2 sm:p-2.5 bg-[#0f172a]/70 backdrop-blur-md rounded-lg shadow-[0_4px_15px_rgba(0,0,0,0.3)] text-gray-300 hover:text-[#38bdf8] hover:bg-[#1e293b] border border-white/10 transition-all group print:hidden flex items-center gap-2"
-                        title="Mục lục"
+                        title="Má»¥c lá»¥c"
                     >
                         <Menu size={22} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-sm font-semibold tracking-wide hidden sm:inline uppercase text-gray-300 group-hover:text-[#38bdf8] transition-colors">Mục lục</span>
+                        <span className="text-sm font-semibold tracking-wide hidden sm:inline uppercase text-gray-300 group-hover:text-[#38bdf8] transition-colors">Má»¥c lá»¥c</span>
                     </button>
                 )}
 
                 {/* TOC Sidebar Overlay */}
                 <div className={`fixed inset-y-0 left-0 z-[100] w-80 bg-[#0f172a]/95 backdrop-blur-xl shadow-[5px_0_25px_rgba(0,0,0,0.5)] transform transition-transform duration-300 ease-in-out print:hidden flex flex-col border-r border-white/5 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                     <div className="flex items-center justify-between p-5 border-b border-white/10 bg-[#020617]/50">
-                        <h2 className="text-[#38bdf8] font-bold text-lg uppercase tracking-wider">Mục lục</h2>
+                        <h2 className="text-[#38bdf8] font-bold text-lg uppercase tracking-wider">Má»¥c lá»¥c</h2>
                         <button onClick={() => setIsSidebarOpen(false)} className="text-gray-400 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors">
                             <X size={20} />
                         </button>
@@ -312,7 +275,7 @@ export default function FlipbookViewer() {
                             </button>
                         ))}
                         {(!macroGroupsMenu || macroGroupsMenu.length === 0) && (
-                            <div className="px-4 py-3 text-sm text-gray-500 italic text-center mt-10">Mục lục trống</div>
+                            <div className="px-4 py-3 text-sm text-gray-500 italic text-center mt-10">Má»¥c lá»¥c trá»‘ng</div>
                         )}
                     </div>
                 </div>
@@ -379,3 +342,4 @@ export default function FlipbookViewer() {
         </>
     );
 }
+
