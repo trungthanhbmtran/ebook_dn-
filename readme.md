@@ -28,24 +28,23 @@ Chạy lần lượt các lệnh sau để triển khai dự án mới (thay th�
 
 ```bash
 # Bước 1: Kéo image mới nhất từ GitHub Container Registry
-docker pull ghcr.io/trungthanhbmtran/duandautu_image:latest
+docker pull ghcr.io/trungthanhbmtran/ebook_dn:latest
 
-# Bước 2: Dừng và xóa container cũ (nếu có)
-docker stop ebook-app || true
-docker rm ebook-app || true
-docker stop duandautu-app || true
-docker rm duandautu-app || true
+# Bước 2: Tìm mạng của Nginx và Xóa toàn bộ các container cũ bị kẹt
+NET_NAME=$(docker inspect ebook_nginx -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || echo "bridge")
+docker rm -f ebook_nextjs duandautu-app ebook-app hoithao_app 2>/dev/null
 
-# Bước 3: Khởi động container mới từ image vừa pull
-docker run -d --name duandautu-app -p 3000:3000 --restart unless-stopped ghcr.io/trungthanhbmtran/duandautu_image:latest
+# Bước 3: Khởi động container mới với tên ebook_nextjs và kết nối vào mạng Nginx
+docker run -d --name ebook_nextjs --network $NET_NAME -p 3000:3000 --restart unless-stopped ghcr.io/trungthanhbmtran/ebook_dn:latest
 
-# Bước 4: Xóa các image cũ không còn dùng để giải phóng ổ đĩa
+# Bước 4: Khởi động lại Nginx để nhận diện máy chủ mới và dọn dẹp ổ đĩa
+docker restart ebook_nginx
 docker image prune -f
 ```
 
 > **Gộp 1 lệnh duy nhất (tiện hơn):**
 > ```bash
-> docker pull ghcr.io/trungthanhbmtran/ebook_dn:latest && (docker stop ebook-app || true) && (docker rm ebook-app || true) && (docker stop duandautu-app || true) && (docker rm duandautu-app || true) && docker run -d --name duandautu-app -p 3000:3000 --restart unless-stopped ghcr.io/trungthanhbmtran/ebook_dn:latest && docker image prune -f
+> docker pull ghcr.io/trungthanhbmtran/ebook_dn:latest && NET_NAME=$(docker inspect ebook_nginx -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || echo "bridge") && docker rm -f ebook_nextjs duandautu-app ebook-app hoithao_app 2>/dev/null; docker run -d --name ebook_nextjs --network $NET_NAME -p 3000:3000 --restart unless-stopped ghcr.io/trungthanhbmtran/ebook_dn:latest && docker restart ebook_nginx && docker image prune -f
 > ```
 
 ---
