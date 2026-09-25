@@ -56,7 +56,7 @@ export default function FlipbookViewer() {
         const targetHeight = 756;
 
         const horizontalMargin = isDesktop ? 120 : 40;
-        const verticalMargin = isDesktop ? 220 : 200;
+        const verticalMargin = isDesktop ? 220 : 250;
 
         const screenW = window.innerWidth - horizontalMargin;
         const screenH = window.innerHeight - 50 - verticalMargin;
@@ -327,7 +327,7 @@ export default function FlipbookViewer() {
 
                 <audio ref={audioRef} src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto" />
 
-                <div ref={bookAreaRef} className={`flex-1 w-full flex items-center justify-center relative z-10 print:hidden ${zoom > 1 ? 'overflow-auto' : 'overflow-hidden'} mt-8 sm:mt-0`}>
+                <div ref={bookAreaRef} className={`flex-1 w-full flex items-center justify-center relative z-10 print:hidden ${zoom > 1 ? 'overflow-auto' : 'overflow-hidden'}`}>
                     {isDesktop && (
                         <>
                             <button onClick={() => bookRef.current?.pageFlip()?.flipPrev()} className="fixed left-3 top-1/2 -translate-y-1/2 z-50 p-3 bg-[rgba(0,0,0,0.4)] hover:bg-[rgba(0,0,0,0.7)] text-white rounded-full transition-opacity hidden sm:flex"><ChevronLeft size={28} /></button>
