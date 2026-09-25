@@ -3,13 +3,12 @@ import fs from 'fs';
 import path from 'path';
 
 let cachedMacros: any = null;
-let lastCacheTime = 0;
 
 export async function GET() {
     try {
-        const now = Date.now();
-        // Cache trong 10 giây (giúp dev mode không bị spam đọc file, production chạy siêu nhanh)
-        if (cachedMacros && now - lastCacheTime < 10000) {
+        // Cache vĩnh viễn trong RAM (chỉ reset khi khởi động lại server/Docker)
+        // Giúp loại bỏ hoàn toàn tình trạng treo "Đang khởi tạo không gian..." trên VPS yếu
+        if (cachedMacros) {
             return NextResponse.json({ macros: cachedMacros });
         }
 
@@ -44,7 +43,6 @@ export async function GET() {
         }
 
         cachedMacros = macros;
-        lastCacheTime = now;
         return NextResponse.json({ macros });
     } catch (error) {
         console.error('Error reading book pages:', error);
