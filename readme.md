@@ -45,7 +45,7 @@ docker image prune -f
 
 > **Gộp 1 lệnh duy nhất (tiện hơn):**
 > ```bash
-> docker pull ghcr.io/trungthanhbmtran/duandautu_image:latest && (docker stop ebook-app || true) && (docker rm ebook-app || true) && (docker stop duandautu-app || true) && (docker rm duandautu-app || true) && docker run -d --name duandautu-app -p 3000:3000 --restart unless-stopped ghcr.io/trungthanhbmtran/duandautu_image:latest && docker image prune -f
+> docker pull ghcr.io/trungthanhbmtran/ebook_dn:latest && (docker stop ebook-app || true) && (docker rm ebook-app || true) && (docker stop duandautu-app || true) && (docker rm duandautu-app || true) && docker run -d --name duandautu-app -p 3000:3000 --restart unless-stopped ghcr.io/trungthanhbmtran/ebook_dn:latest && docker image prune -f
 > ```
 
 ---
